@@ -16,7 +16,7 @@ p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
 
 def PrintMessage(name,message="welcome to the stream"):
 	p.set(width=2, height=2, invert=True)
-	p.text(f"{name} :\n")
+	p.text(f"{name}\n")
 	p.set(width=1, height=1, invert=False)
 	p.text(message)
 	p.cut()
@@ -24,6 +24,9 @@ def PrintMessage(name,message="welcome to the stream"):
 def CheckOrAddUser(uid,username):
 	User = Query()
 	found_users = users.search(User.id == uid)
+
+	if(uid == 0):
+		return {"new_user":False, "prints_left":0}
 
 	if(len(found_users) != 0):
 		return {"new_user":False, "prints_left":found_users[0]['prints_left']}
@@ -47,16 +50,16 @@ def CheckIfAdmin(uid):
 
 def DeductPrint(uid):
 	User = Query()
-	user = users.search(User.id == uid)[0]
-	user["prints_left"] = user["prints_left"] - 1
-	users.update(user)
+	prints_left = users.search(User.id == uid)[0]["prints_left"]
+	prints_left -= 1
+	users.update({'prints_left': prints_left }, User.id == uid)
 
 def AddPrintsToUser(username, print_quantity):
 	User = Query()
-	user = users.search(User.username == username)
-	if(len(user) != 0):
-		user[0]["prints_left"] += int(print_quantity)
-		users.update(user[0])
+	prints_left = users.search(User.username == username)[0]["prints_left"]
+	prints_left += int(print_quantity)
+	users.update({'prints_left': prints_left }, User.username == username)
+	print(f"Refill | {username} has {prints_left}")
 
 class Bot(commands.Bot):
 
@@ -75,8 +78,8 @@ class Bot(commands.Bot):
 	async def event_message(self, message):
 		status = CheckOrAddUser(message.author.id, message.author.name)
 		if(status["new_user"] == True):
-			print(f"NewUser | {message.author.name} joined the chat")
-			#PrintMessage(message.author.name)
+			print(f"NewUser message | {message.author.name} joined the chat")
+			PrintMessage(message.author.name)
 		await self.handle_commands(message)
 
 	@commands.command(name='print')
@@ -91,7 +94,7 @@ class Bot(commands.Bot):
 				DeductPrint(ctx.author.id)
 				if(message == ""):
 					PrintMessage(ctx.author.name)
-				else:
+				else: 
 					PrintMessage(ctx.author.name, message)
 				
 				await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
@@ -108,7 +111,7 @@ class Bot(commands.Bot):
 			amount = data[1]
 			AddPrintsToUser(user, amount)
 		else:
-			print("Not Admin")
+			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
 
 bot = Bot()
 bot.run()
