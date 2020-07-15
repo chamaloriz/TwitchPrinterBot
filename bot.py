@@ -15,8 +15,9 @@ p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
            dsrdtr=True)
 
 def PrintMessage(name,message="welcome to the stream"):
+	p.charcode(code='WEST_EUROPE')
 	p.set(width=2, height=2, invert=True)
-	p.text(f"{name}\n")
+	p.text(f"{name}\n\n")
 	p.set(width=1, height=1, invert=False)
 	p.text(message)
 	p.cut()
@@ -72,6 +73,9 @@ class Bot(commands.Bot):
 			initial_channels=['chamaloriz']
 		)
 
+	async def event_command_error(self, ctx, error):
+		pass
+
 	async def event_ready(self):
 		print(f'Ready | {self.nick}')
 
@@ -91,13 +95,12 @@ class Bot(commands.Bot):
 			if(len(message) < 100):
 				prints_left = user["prints_left"] - 1
 				print(f"Printing | {len(message)} char message from {ctx.author.name}")
-				DeductPrint(ctx.author.id)
 				if(message == ""):
-					PrintMessage(ctx.author.name)
+					await ctx.send(f"{ctx.author.name} you need to add a text to print after the command (!print bla bla)")
 				else: 
+					DeductPrint(ctx.author.id)
 					PrintMessage(ctx.author.name, message)
-				
-				await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
+					await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
 			else:
 				await ctx.send(f"{ctx.author.name} you can only print 250 chars")
 		else:
@@ -112,6 +115,10 @@ class Bot(commands.Bot):
 			AddPrintsToUser(user, amount)
 		else:
 			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
+
+	@commands.command(name='help')
+	async def help(self, ctx):
+		await ctx.send(f"{ctx.author.name} you can !print to show your message on the printer")
 
 bot = Bot()
 bot.run()
