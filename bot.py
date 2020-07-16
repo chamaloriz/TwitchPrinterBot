@@ -7,7 +7,7 @@ users = db.table('users')
 admins = db.table('admins')
 oauthkey = db.table('oauthkey')
 
-p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
+simple_printer = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
            baudrate=9600,
            bytesize=8,
            parity='N',
@@ -15,16 +15,27 @@ p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
            timeout=1.00,
            dsrdtr=True)
 
-def PrintMessage(name,message=None):
-	p.charcode(code='AUTO')
-	p.set(custom_size=True, width=2, height=2, invert=True, smooth=True)
-	p.text(f"{name}\n")
-	if(message != None):
-		p.set(custom_size=False, font="b", width=2, height=2, invert=False)
-		p.textln(message)
+sticky_printer = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla-1',
+           baudrate=9600,
+           bytesize=8,
+           parity='N',
+           stopbits=1,
+           timeout=1.00,
+           dsrdtr=True)
+
+def PrintMessage(name,message=None, sticky=False):
+	if(not sticky):
+		simple_printer.charcode(code='AUTO')
+		simple_printer.set(custom_size=True, width=2, height=2, invert=True, smooth=True)
+		simple_printer.text(f"{name}\n")
+		simple_printer.set(custom_size=False, font="b", width=2, height=2, invert=False)
+		simple_printer.text(message + "\n\n\n\n\n")
 	else:
-		p.set(custom_size=False, font="b", width=2, height=2, invert=True)
-		p.text("Welcome to the stream !!!" + "\n\n")
+		sticky_printer.charcode(code='AUTO')
+		sticky_printer.set(custom_size=True, width=2, height=2, invert=True, smooth=True)
+		sticky_printer.text(f"{name}\n")
+		sticky_printer.set(custom_size=False, font="b", width=2, height=2, invert=True)
+		sticky_printer.text("Welcome to the stream !!!" + "\n\n\n\n\n")
 
 def CheckOrAddUser(uid,username):
 	User = Query()
@@ -41,7 +52,7 @@ def CheckOrAddUser(uid,username):
 			'username': username,
 			'id': uid,
 			'printed_total': 0,
-			'prints_left': 2,
+			'prints_left': 5,
 		})
 		return {"new_user":True, "prints_left":2, "printed_total":0}
 
@@ -93,7 +104,7 @@ class Bot(commands.Bot):
 		status = CheckOrAddUser(message.author.id, message.author.name)
 		if(status["new_user"] == True):
 			print(f"NewUser message | {message.author.name} joined the chat")
-			PrintMessage(message.author.name)
+			PrintMessage(message.author.name,sticky=True)
 		await self.handle_commands(message)
 
 	@commands.command(name='print')
@@ -124,6 +135,13 @@ class Bot(commands.Bot):
 			user = data[0]
 			amount = data[1]
 			AddPrintsToUser(user, amount)
+		else:
+			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
+
+	@commands.command(name='test')
+	async def test(self, ctx):
+		if(CheckIfAdmin(ctx.author.id)):
+			PrintMessage(ctx.author.name,sticky=True)
 		else:
 			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
 
