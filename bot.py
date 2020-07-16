@@ -124,7 +124,7 @@ class Bot(commands.Bot):
 					PrintMessage(ctx.author.name, message)
 					await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
 			else:
-				await ctx.send(f"{ctx.author.name} you can only print 250 chars")
+				await ctx.send(f"{ctx.author.name} you can only print 100 chars")
 		else:
 			await ctx.send(f"{ctx.author.name} you can't print anymore wait for a refill :p")
 
