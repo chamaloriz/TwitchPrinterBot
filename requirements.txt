@@ -1,2 +1,2 @@
-python-escpos==2.2.0
+python-escpos==3.0a8
 twitchio==1.1.0

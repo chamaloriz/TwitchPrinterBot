@@ -5,6 +5,7 @@ from tinydb import TinyDB, Query
 db = TinyDB('twitch_users.json')
 users = db.table('users')
 admins = db.table('admins')
+oauthkey = db.table('oauthkey')
 
 p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
            baudrate=9600,
@@ -14,13 +15,16 @@ p = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla',
            timeout=1.00,
            dsrdtr=True)
 
-def PrintMessage(name,message="welcome to the stream"):
-	p.charcode(code='WEST_EUROPE')
-	p.set(width=2, height=2, invert=True)
-	p.text(f"{name}\n\n")
-	p.set(width=1, height=1, invert=False)
-	p.text(message)
-	p.cut()
+def PrintMessage(name,message=None):
+	p.charcode(code='AUTO')
+	p.set(custom_size=True, width=2, height=2, invert=True, smooth=True)
+	p.text(f"{name}\n")
+	if(message != None):
+		p.set(custom_size=False, font="b", width=2, height=2, invert=False)
+		p.textln(message)
+	else:
+		p.set(custom_size=False, font="b", width=2, height=2, invert=True)
+		p.text("Welcome to the stream !!!" + "\n\n")
 
 def CheckOrAddUser(uid,username):
 	User = Query()
@@ -30,7 +34,7 @@ def CheckOrAddUser(uid,username):
 		return {"new_user":False, "prints_left":0}
 
 	if(len(found_users) != 0):
-		return {"new_user":False, "prints_left":found_users[0]['prints_left']}
+		return {"new_user":False, "prints_left":found_users[0]['prints_left'], "printed_total":found_users[0]['printed_total']}
 	else:
 		print(f"Creating User | {username}")
 		users.insert({
@@ -39,7 +43,7 @@ def CheckOrAddUser(uid,username):
 			'printed_total': 0,
 			'prints_left': 2,
 		})
-		return {"new_user":True, "prints_left":2}
+		return {"new_user":True, "prints_left":2, "printed_total":0}
 
 def CheckIfAdmin(uid):
 	User = Query()
@@ -48,6 +52,12 @@ def CheckIfAdmin(uid):
 		return True
 	else:
 		return False
+
+def AddToTotal(uid):
+	User = Query()
+	printed_total = users.search(User.id == uid)[0]["printed_total"]
+	printed_total += 1
+	users.update({'printed_total': printed_total }, User.id == uid)
 
 def DeductPrint(uid):
 	User = Query()
@@ -66,7 +76,7 @@ class Bot(commands.Bot):
 
 	def __init__(self):
 		super().__init__(
-			irc_token='oauth:ryv23uregfmhvw7t883mvi9ebz1f6g',
+			irc_token=oauthkey.all()[0]["key"],
 			client_id='chamaloriz',
 			nick='chamaloriz',
 			prefix='!',
@@ -99,6 +109,7 @@ class Bot(commands.Bot):
 					await ctx.send(f"{ctx.author.name} you need to add a text to print after the command (!print bla bla)")
 				else: 
 					DeductPrint(ctx.author.id)
+					AddToTotal(ctx.author.id)
 					PrintMessage(ctx.author.name, message)
 					await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
 			else:
