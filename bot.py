@@ -1,6 +1,9 @@
 from escpos.printer import Serial
 from twitchio.ext import commands
 from tinydb import TinyDB, Query
+import asyncio
+import time
+import json
 
 db = TinyDB('twitch_users.json')
 users = db.table('users')
@@ -23,6 +26,30 @@ sticky_printer = Serial(devfile='/dev/cu.BlueToothPrinter-SPPsla-1',
            timeout=1.00,
            dsrdtr=True)
 
+def checkIfGoodColor(color):
+	try:
+		color = int(color)
+		if(type(color) == int and color <= 255 and color >= 0):
+			return True
+		else:
+			return False
+	except:
+		return False
+
+def ChangeColor(uid, r, g, b):
+	User = Query()
+	users.update({'color': {"r":r,"g":g,"b":b} }, User.id == uid)
+
+def ResetActivity(uid):
+	User = Query()
+	users.update({'activity': 100 }, User.id == uid)
+
+def DeductPrint(uid):
+	User = Query()
+	prints_left = users.search(User.id == uid)[0]["prints_left"]
+	prints_left -= 1
+	users.update({'prints_left': prints_left }, User.id == uid)
+
 def PrintMessage(name,message=None, sticky=False):
 	if(not sticky):
 		simple_printer.charcode(code='AUTO')
@@ -44,8 +71,10 @@ def CheckOrAddUser(uid,username):
 	if(uid == 0):
 		return {"new_user":False, "prints_left":0}
 
+	ResetActivity(uid)
+
 	if(len(found_users) != 0):
-		return {"new_user":False, "prints_left":found_users[0]['prints_left'], "printed_total":found_users[0]['printed_total']}
+		return {"uid":uid, "color":found_users[0]['color'], "new_user":False, "prints_left":found_users[0]['prints_left'], "printed_total":found_users[0]['printed_total']}
 	else:
 		print(f"Creating User | {username}")
 		users.insert({
@@ -53,8 +82,10 @@ def CheckOrAddUser(uid,username):
 			'id': uid,
 			'printed_total': 0,
 			'prints_left': 5,
+			'color': {"r":100,"g":65,"b":165},
+			'activity': 0,
 		})
-		return {"new_user":True, "prints_left":2, "printed_total":0}
+		return {"uid":uid, "color":{"r":100,"g":65,"b":165}, "new_user":True, "prints_left":2, "printed_total":0}
 
 def CheckIfAdmin(uid):
 	User = Query()
@@ -137,6 +168,20 @@ class Bot(commands.Bot):
 			AddPrintsToUser(user, amount)
 		else:
 			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
+
+	@commands.command(name='color')
+	async def changeColor(self, ctx):
+		data = ctx.message.content[7:].split(' ')
+		r = data[0]
+		g = data[1]
+		b = data[2]
+		if(checkIfGoodColor(r) and checkIfGoodColor(g) and checkIfGoodColor(b)):
+			if(ctx.author.id != 0):
+				print(f"Changing Color | to {r}/{g}/{b} for {ctx.author.name}")
+				await ctx.send(f"{ctx.author.name} I'll do that for sure !")
+				ChangeColor(uid=ctx.author.id, r=r, g=g, b=b)
+		else:
+			await ctx.send(f"{ctx.author.name} you can't change to that it should be in this format !color 255 255 255 each color can be from 0 to 255")
 
 	@commands.command(name='test')
 	async def test(self, ctx):
