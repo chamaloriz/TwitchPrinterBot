@@ -3,7 +3,7 @@
 
 #define PIN        6
 
-Adafruit_NeoPixel pixels(30, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(60, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   Serial.begin(115200);

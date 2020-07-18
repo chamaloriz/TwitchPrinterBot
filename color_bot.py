@@ -8,11 +8,11 @@ import numpy
 db = TinyDB('twitch_users.json')
 users = db.table('users')
 
-led_wall = serial.Serial("/dev/cu.usbmodem14401", baudrate=115200)
+led_wall = serial.Serial("/dev/cu.usbmodem14101", baudrate=115200)
 
 async def ColorFrameUpdater():
 	while True:
-		time.sleep(5)
+		#time.sleep(0)
 		User = Query()
 		data_to_send = []
 		active_users = users.search(User["activity"] > 0)
@@ -28,7 +28,7 @@ async def ColorFrameUpdater():
 			data_to_send.append(data)
 	
 		#chuck an array into arrays of max 5
-		chuncked_data = numpy.array_split(numpy.array(data_to_send),5)
+		chuncked_data = numpy.array_split(numpy.array(data_to_send),10)
 		position = 0
 	
 		for data in chuncked_data:

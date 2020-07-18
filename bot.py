@@ -153,7 +153,7 @@ class Bot(commands.Bot):
 					DeductPrint(ctx.author.id)
 					AddToTotal(ctx.author.id)
 					PrintMessage(ctx.author.name, message)
-					await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
+					#await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
 			else:
 				await ctx.send(f"{ctx.author.name} you can only print 100 chars")
 		else:
@@ -178,7 +178,7 @@ class Bot(commands.Bot):
 		if(checkIfGoodColor(r) and checkIfGoodColor(g) and checkIfGoodColor(b)):
 			if(ctx.author.id != 0):
 				print(f"Changing Color | to {r}/{g}/{b} for {ctx.author.name}")
-				await ctx.send(f"{ctx.author.name} I'll do that for sure !")
+				#await ctx.send(f"{ctx.author.name} I'll do that for sure !")
 				ChangeColor(uid=ctx.author.id, r=r, g=g, b=b)
 		else:
 			await ctx.send(f"{ctx.author.name} you can't change to that it should be in this format !color 255 255 255 each color can be from 0 to 255")
@@ -190,9 +190,17 @@ class Bot(commands.Bot):
 		else:
 			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
 
+	@commands.command(name='github')
+	async def github(self, ctx):
+		await ctx.send(f"https://github.com/chamaloriz")
+
+	@commands.command(name='discord')
+	async def discord(self, ctx):
+		await ctx.send(f"https://discord.gg/r73MK2s")
+
 	@commands.command(name='help')
 	async def help(self, ctx):
-		await ctx.send(f"{ctx.author.name} you can !print to show your message on the printer")
+		await ctx.send(f"/me {ctx.author.name} you can !print blablabla to show your message on the printer, !color (0-255) (0-255) (0-255) to change the color of your LED, !github, !discord")
 
 bot = Bot()
 bot.run()
