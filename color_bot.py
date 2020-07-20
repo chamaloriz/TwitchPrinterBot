@@ -8,7 +8,7 @@ import numpy
 db = TinyDB('twitch_users.json')
 users = db.table('users')
 
-led_wall = serial.Serial("/dev/cu.usbmodem14101", baudrate=115200)
+led_wall = serial.Serial("/dev/cu.usbmodem14401", baudrate=115200)
 
 async def ColorFrameUpdater():
 	while True:

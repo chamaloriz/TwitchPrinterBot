@@ -25,19 +25,11 @@ void loop() {
     Serial.println(error.c_str()); 
     return;
   }
-  
-  //Serial.println(doc["data"].size());
-  //Serial.println(quantity);
 
   int position = doc["position"];
   String status = doc["status"];
 
   Serial.println(status);
-  
-  if(status == "start"){
-    //pixels.clear();
-    //pixels.show();
-  }
 
   // method to show leds
   
@@ -66,6 +58,4 @@ void loop() {
     
     pixels.show();
   }
-  
-  delay(20);
 }

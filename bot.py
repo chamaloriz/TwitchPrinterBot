@@ -38,9 +38,10 @@ def checkIfGoodColor(color):
 
 def ChangeColor(uid, r, g, b):
 	User = Query()
-	users.update({'color': {"r":r,"g":g,"b":b} }, User.id == uid)
+	users.update({'color': {"r":int(r),"g":int(g),"b":int(b)} }, User.id == uid)
 
-def ResetActivity(uid):
+def ResetActivity(uid, username):
+	print(f"Activity | {username} became active")
 	User = Query()
 	users.update({'activity': 100 }, User.id == uid)
 
@@ -71,7 +72,7 @@ def CheckOrAddUser(uid,username):
 	if(uid == 0):
 		return {"new_user":False, "prints_left":0}
 
-	ResetActivity(uid)
+	ResetActivity(uid=uid,username=username)
 
 	if(len(found_users) != 0):
 		return {"uid":uid, "color":found_users[0]['color'], "new_user":False, "prints_left":found_users[0]['prints_left'], "printed_total":found_users[0]['printed_total']}
@@ -100,12 +101,6 @@ def AddToTotal(uid):
 	printed_total = users.search(User.id == uid)[0]["printed_total"]
 	printed_total += 1
 	users.update({'printed_total': printed_total }, User.id == uid)
-
-def DeductPrint(uid):
-	User = Query()
-	prints_left = users.search(User.id == uid)[0]["prints_left"]
-	prints_left -= 1
-	users.update({'prints_left': prints_left }, User.id == uid)
 
 def AddPrintsToUser(username, print_quantity):
 	User = Query()
@@ -148,16 +143,16 @@ class Bot(commands.Bot):
 				prints_left = user["prints_left"] - 1
 				print(f"Printing | {len(message)} char message from {ctx.author.name}")
 				if(message == ""):
-					await ctx.send(f"{ctx.author.name} you need to add a text to print after the command (!print bla bla)")
+					await ctx.send(f"/me {ctx.author.name} you need to add a text to print after the command (!print bla bla)")
 				else: 
 					DeductPrint(ctx.author.id)
 					AddToTotal(ctx.author.id)
 					PrintMessage(ctx.author.name, message)
 					#await ctx.send(f"{ctx.author.name} I'll print that ! you have {prints_left} left")
 			else:
-				await ctx.send(f"{ctx.author.name} you can only print 100 chars")
+				await ctx.send(f"/me {ctx.author.name} you can only print 100 chars")
 		else:
-			await ctx.send(f"{ctx.author.name} you can't print anymore wait for a refill :p")
+			await ctx.send(f"/me {ctx.author.name} you can't print anymore wait for a refill :p")
 
 	@commands.command(name='refill')
 	async def refill(self, ctx):
@@ -181,7 +176,7 @@ class Bot(commands.Bot):
 				#await ctx.send(f"{ctx.author.name} I'll do that for sure !")
 				ChangeColor(uid=ctx.author.id, r=r, g=g, b=b)
 		else:
-			await ctx.send(f"{ctx.author.name} you can't change to that it should be in this format !color 255 255 255 each color can be from 0 to 255")
+			await ctx.send(f"/me {ctx.author.name} you can't change to that it should be in this format !color 255 255 255 each color can be from 0 to 255")
 
 	@commands.command(name='test')
 	async def test(self, ctx):
@@ -190,17 +185,17 @@ class Bot(commands.Bot):
 		else:
 			print(f"Not Admin {ctx.author.name} : {ctx.author.id}")
 
-	@commands.command(name='github')
+	@commands.command(name='git')
 	async def github(self, ctx):
-		await ctx.send(f"https://github.com/chamaloriz")
+		await ctx.send(f"/me https://github.com/chamaloriz")
 
 	@commands.command(name='discord')
 	async def discord(self, ctx):
-		await ctx.send(f"https://discord.gg/r73MK2s")
+		await ctx.send(f"/me https://discord.gg/r73MK2s")
 
 	@commands.command(name='help')
 	async def help(self, ctx):
-		await ctx.send(f"/me {ctx.author.name} you can !print blablabla to show your message on the printer, !color (0-255) (0-255) (0-255) to change the color of your LED, !github, !discord")
+		await ctx.send(f"/me {ctx.author.name} you can !print blablabla to show your message on the printer, !color (0-255) (0-255) (0-255) to change the color of your LED, !git, !discord")
 
 bot = Bot()
 bot.run()
